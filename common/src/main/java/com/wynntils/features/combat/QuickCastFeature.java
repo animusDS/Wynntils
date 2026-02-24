@@ -4,6 +4,7 @@
  */
 package com.wynntils.features.combat;
 
+import com.wynntils.core.WynntilsMod;
 import com.wynntils.core.components.Managers;
 import com.wynntils.core.components.Models;
 import com.wynntils.core.consumers.features.Feature;
@@ -36,6 +37,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import org.lwjgl.glfw.GLFW;
 
 @ConfigCategory(Category.COMBAT)
 public class QuickCastFeature extends Feature {
@@ -71,6 +73,11 @@ public class QuickCastFeature extends Feature {
 
     private int lastSpellTick = 0;
     private int packetCountdown = 0;
+    private boolean quickCastActive = false;
+    private boolean mouseButton4Prev = false;
+    private boolean nextIsFirstSpell = true;
+    private int rightClickCooldown = 0;
+    private boolean pendingRightClickRelease = false;
 
     public QuickCastFeature() {
         super(ProfileDefault.ENABLED);
@@ -200,6 +207,41 @@ public class QuickCastFeature extends Feature {
     @SubscribeEvent
     public void onTick(TickEvent e) {
         if (!Models.WorldState.onWorld()) return;
+
+        if (pendingRightClickRelease) {
+            McUtils.mc().options.keyUse.setDown(false);
+            pendingRightClickRelease = false;
+        }
+
+        boolean mouse4Pressed = GLFW.glfwGetMouseButton(McUtils.window().handle(), 4) == 1;
+
+        if (mouse4Pressed && !mouseButton4Prev) {
+            quickCastActive = !quickCastActive;
+            WynntilsMod.info("QuickCast " + (quickCastActive ? "enabled" : "disabled"));
+        }
+
+        mouseButton4Prev = mouse4Pressed;
+
+        if (quickCastActive) {
+            if (rightClickCooldown <= 0) {
+                McUtils.mc().options.keyUse.setDown(true);
+                pendingRightClickRelease = true;
+
+                packetCountdown = 1;
+
+                if (nextIsFirstSpell) {
+                    castFirstSpell();
+                } else {
+                    castThirdSpell();
+                }
+
+                nextIsFirstSpell = !nextIsFirstSpell;
+                rightClickCooldown = 2;
+
+            } else {
+                rightClickCooldown--;
+            }
+        }
 
         if (packetCountdown > 0) {
             packetCountdown--;
