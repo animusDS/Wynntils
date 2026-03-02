@@ -20,6 +20,8 @@ import com.wynntils.mc.event.ArmSwingEvent;
 import com.wynntils.mc.event.ChangeCarriedItemEvent;
 import com.wynntils.mc.event.TickEvent;
 import com.wynntils.mc.event.UseItemEvent;
+import com.wynntils.models.abilities.AbilityModel;
+import com.wynntils.models.abilities.bossbars.ManaBankBar;
 import com.wynntils.models.character.type.ClassType;
 import com.wynntils.models.items.properties.ClassableItemProperty;
 import com.wynntils.models.items.properties.RequirementItemProperty;
@@ -73,11 +75,13 @@ public class QuickCastFeature extends Feature {
 
     private int lastSpellTick = 0;
     private int packetCountdown = 0;
+    private int cycleIndex = 0;
+    private int spellCastCooldown = 0;
     private boolean quickCastActive = false;
     private boolean mouseButton4Prev = false;
     private boolean nextIsFirstSpell = true;
     private int rightClickCooldown = 0;
-    private boolean pendingRightClickRelease = false;
+    private boolean pendingClickRelease = false;
 
     public QuickCastFeature() {
         super(ProfileDefault.ENABLED);
@@ -208,9 +212,9 @@ public class QuickCastFeature extends Feature {
     public void onTick(TickEvent e) {
         if (!Models.WorldState.onWorld()) return;
 
-        if (pendingRightClickRelease) {
-            McUtils.mc().options.keyUse.setDown(false);
-            pendingRightClickRelease = false;
+        if (pendingClickRelease) {
+            McUtils.mc().options.keyAttack.setDown(false);
+            pendingClickRelease = false;
         }
 
         boolean mouse4Pressed = GLFW.glfwGetMouseButton(McUtils.window().handle(), 4) == 1;
@@ -222,20 +226,33 @@ public class QuickCastFeature extends Feature {
 
         mouseButton4Prev = mouse4Pressed;
 
+        ManaBankBar manaBar = (ManaBankBar) AbilityModel.manaBankBar;
+        if (spellCastCooldown <= 0 &&
+                manaBar.getMaxMana() > 0 &&
+                manaBar.getCurrentMana() >= manaBar.getMaxMana() &&
+                nextIsFirstSpell) {
+
+            castFirstSpell();
+            spellCastCooldown = 5;
+        }
+
+        if (spellCastCooldown > 0) {
+            spellCastCooldown--;
+        }
+
         if (quickCastActive) {
             if (rightClickCooldown <= 0) {
-                McUtils.mc().options.keyUse.setDown(true);
-                pendingRightClickRelease = true;
+                McUtils.mc().options.keyAttack.setDown(true);
+                pendingClickRelease = true;
 
                 packetCountdown = 1;
 
-                if (nextIsFirstSpell) {
-                    castFirstSpell();
-                } else {
-                    castThirdSpell();
+                switch (cycleIndex) {
+                    case 0, 1, 2 -> castThirdSpell();
+                    case 3 -> castFourthSpell();
                 }
 
-                nextIsFirstSpell = !nextIsFirstSpell;
+                cycleIndex = (cycleIndex + 1) % 4;
                 rightClickCooldown = 2;
 
             } else {
