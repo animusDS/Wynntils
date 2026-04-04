@@ -41,4 +41,8 @@ public final class ManaBankBar extends TrackedBar {
     public int getMaxMana() {
         return maxMana;
     }
+
+    public void reset() {
+        currentMana = 0;
+    }
 }

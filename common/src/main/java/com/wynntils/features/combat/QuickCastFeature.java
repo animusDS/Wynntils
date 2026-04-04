@@ -227,11 +227,7 @@ public class QuickCastFeature extends Feature {
         mouseButton4Prev = mouse4Pressed;
 
         ManaBankBar manaBar = (ManaBankBar) AbilityModel.manaBankBar;
-        if (spellCastCooldown <= 0 &&
-                manaBar.getMaxMana() > 0 &&
-                manaBar.getCurrentMana() >= manaBar.getMaxMana() &&
-                nextIsFirstSpell) {
-
+        if (spellCastCooldown <= 0 && manaBar.getCurrentMana() >= 150 && nextIsFirstSpell) {
             castFirstSpell();
             spellCastCooldown = 5;
         }
