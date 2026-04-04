@@ -63,9 +63,10 @@ public class CompatibilityService extends Service {
     @SubscribeEvent
     public void onWorldStateChange(WorldStateEvent event) {
         if (WynntilsMod.isDevelopmentEnvironment() || WynntilsMod.isDevelopmentBuild()) return;
+        if (wynncraftVersion == null) return;
 
         if (event.getNewState() == WorldState.WORLD && event.isFirstJoinWorld()) {
-            if (compatibilityTier.shouldChatPrompt()) {
+            if (compatibilityTier.shouldToastPrompt()) {
                 MutableComponent toastMessage = Component.empty()
                         .append(Component.translatable("service.wynntils.compatibility.toastMessage1"))
                         .append(Component.literal("Y").withStyle(Style.EMPTY.withFont(WYNNTILS_KEYBIND_FONT)))
@@ -147,13 +148,7 @@ public class CompatibilityService extends Service {
         }
 
         // TODO: Replace with Athena call
-        //  Temporary to force old clients to have a warning on Fruma (v2.2)
-        if (wynncraftVersion.versionGroup().equals("2")
-                && wynncraftVersion.majorVersion().equals("2")) {
-            compatibilityTier = CompatibilityTier.MAJOR_ERRORS;
-        } else {
-            compatibilityTier = CompatibilityTier.COMPATIBLE;
-        }
+        compatibilityTier = CompatibilityTier.COMPATIBLE;
 
         if (compatibilityTier.shouldScreenPrompt() && !isCompatible()) {
             // This has to be done on the main thread
