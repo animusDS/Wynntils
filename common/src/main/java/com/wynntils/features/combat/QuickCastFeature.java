@@ -48,8 +48,14 @@ public class QuickCastFeature extends Feature {
     private static final List<CombatClickType> FOURTH_SPELL_SEQUENCE =
             List.of(CombatClickType.PRIMARY, CombatClickType.PRIMARY, CombatClickType.SECONDARY);
 
+    // Auto-loop fields (pattern: first, second, first)
+    private volatile boolean autoLoopEnabled = false;
+    private int autoLoopIndex = 0;
+    private final List<List<CombatClickType>> autoLoopPattern =
+            List.of(FIRST_SPELL_SEQUENCE, THIRD_SPELL_SEQUENCE, FIRST_SPELL_SEQUENCE);
+
     @RegisterKeyBind
-    private final KeyBind castFirstSpell = KeyBindDefinition.CAST_FIRST_SPELL.create(() -> {});
+    private final KeyBind castFirstSpell = KeyBindDefinition.CAST_F IRST_SPELL.create(this::toggleAutoLoop);
 
     @RegisterKeyBind
     private final KeyBind castSecondSpell = KeyBindDefinition.CAST_SECOND_SPELL.create(() -> {});
@@ -64,10 +70,10 @@ public class QuickCastFeature extends Feature {
     private final KeyBind castMeleeAttack = KeyBindDefinition.CAST_MELEE_ATTACK.create(() -> {});
 
     private final SpellBinding[] spellBindings = {
-        new SpellBinding(castFirstSpell, FIRST_SPELL_SEQUENCE),
-        new SpellBinding(castSecondSpell, SECOND_SPELL_SEQUENCE),
-        new SpellBinding(castThirdSpell, THIRD_SPELL_SEQUENCE),
-        new SpellBinding(castFourthSpell, FOURTH_SPELL_SEQUENCE)
+            new SpellBinding(castFirstSpell, FIRST_SPELL_SEQUENCE),
+            new SpellBinding(castSecondSpell, SECOND_SPELL_SEQUENCE),
+            new SpellBinding(castThirdSpell, THIRD_SPELL_SEQUENCE),
+            new SpellBinding(castFourthSpell, FOURTH_SPELL_SEQUENCE)
     };
     private final boolean[] spellKeysWereDown = new boolean[spellBindings.length];
     private final boolean[] spellKeysJustPressed = new boolean[spellBindings.length];
@@ -111,6 +117,7 @@ public class QuickCastFeature extends Feature {
         Models.SpellCaster.setIdleListener(null);
         Models.SpellCaster.clear();
         clearInputSelectionState();
+        autoLoopEnabled = false;
     }
 
     @SubscribeEvent
@@ -197,6 +204,13 @@ public class QuickCastFeature extends Feature {
             discardBlockedPendingInputs();
             return;
         }
+
+        // If auto-looping is enabled, handle it exclusively here.
+        if (autoLoopEnabled) {
+            handleAutoLoop();
+            return;
+        }
+
         if (meleeKeyJustPressed) {
             meleeInsertionState.onStandaloneMeleePressed();
         }
@@ -207,6 +221,35 @@ public class QuickCastFeature extends Feature {
         tryCastHeldSpell();
         tryCastBufferedStandaloneMelee();
         tryCastHeldMelee();
+    }
+
+    private void handleAutoLoop() {
+        if (!autoLoopEnabled) return;
+        if (Models.SpellCaster.isBusy()) return;
+        if (!QueuedMeleeScheduler.canHandleCombatInput()) return;
+
+        QueuedMeleeScheduler.WeaponContext weaponContext = getWeaponContext(false);
+        if (!weaponContext.valid()) {
+            Managers.Notification.queueMessage(
+                    Component.translatable("feature.wynntils.quickCast.autoloop.stopped.invalid")
+                            .withStyle(ChatFormatting.RED));
+            autoLoopEnabled = false;
+            return;
+        }
+
+        List<CombatClickType> clicks = autoLoopPattern.get(autoLoopIndex);
+        boolean queued =
+                Models.SpellCaster.queueClicks(
+                        clicks,
+                        weaponContext.isArcher(),
+                        leftClickDelayMs.get(),
+                        rightClickDelayMs.get(),
+                        spellCooldownMs.get(),
+                        adaptiveLagCorrection.get());
+
+        if (queued) {
+            autoLoopIndex = (autoLoopIndex + 1) % autoLoopPattern.size();
+        }
     }
 
     private void tryCastHeldSpell() {
@@ -569,6 +612,19 @@ public class QuickCastFeature extends Feature {
             standaloneMeleeQueued = false;
             bufferedStandaloneMelee = false;
             pendingStandaloneMeleePress = false;
+        }
+    }
+
+    // Toggle auto-loop and notify the user.
+    private void toggleAutoLoop() {
+        autoLoopEnabled = !autoLoopEnabled;
+        if (autoLoopEnabled) {
+            autoLoopIndex = 0;
+            Managers.Notification.queueMessage(
+                    Component.translatable("feature.wynntils.quickCast.autoloop.enabled").withStyle(ChatFormatting.GREEN));
+        } else {
+            Managers.Notification.queueMessage(
+                    Component.translatable("feature.wynntils.quickCast.autoloop.disabled").withStyle(ChatFormatting.YELLOW));
         }
     }
 }
