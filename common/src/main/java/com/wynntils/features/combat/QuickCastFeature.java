@@ -55,7 +55,7 @@ public class QuickCastFeature extends Feature {
             List.of(FIRST_SPELL_SEQUENCE, THIRD_SPELL_SEQUENCE, FIRST_SPELL_SEQUENCE);
 
     @RegisterKeyBind
-    private final KeyBind castFirstSpell = KeyBindDefinition.CAST_F IRST_SPELL.create(this::toggleAutoLoop);
+    private final KeyBind castFirstSpell = KeyBindDefinition.CAST_FIRST_SPELL.create(this::toggleAutoLoop);
 
     @RegisterKeyBind
     private final KeyBind castSecondSpell = KeyBindDefinition.CAST_SECOND_SPELL.create(() -> {});
