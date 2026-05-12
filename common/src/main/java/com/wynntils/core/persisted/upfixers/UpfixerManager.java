@@ -13,6 +13,7 @@ import com.wynntils.core.persisted.PersistedValue;
 import com.wynntils.core.persisted.upfixers.config.ChatRedirectHorseToMountUpfixer;
 import com.wynntils.core.persisted.upfixers.config.CombatXpGainToXpGainUpfixer;
 import com.wynntils.core.persisted.upfixers.config.ContentTrackerTextOverlayUpfixer;
+import com.wynntils.core.persisted.upfixers.config.CoordinateOverlayToCoordinatesOverlayUpfixer;
 import com.wynntils.core.persisted.upfixers.config.CustomBankQuickJumpsBankNameUpfixer;
 import com.wynntils.core.persisted.upfixers.config.CustomBankQuickJumpsUpfixer;
 import com.wynntils.core.persisted.upfixers.config.CustomCommandKeybindSlashStartUpfixer;
@@ -24,6 +25,7 @@ import com.wynntils.core.persisted.upfixers.config.GameBarOverlayMoveUpfixer;
 import com.wynntils.core.persisted.upfixers.config.HideDamageLabelsToHideLabelsUpfixer;
 import com.wynntils.core.persisted.upfixers.config.HorseMountFeatureToMountKeybindFeatureUpfixer;
 import com.wynntils.core.persisted.upfixers.config.ItemHighlightFeatureCosmeticToStoreUpfixer;
+import com.wynntils.core.persisted.upfixers.config.ItemStatInfoConfigRenameUpfixer;
 import com.wynntils.core.persisted.upfixers.config.MapToMainMapRenamedConfigsUpfixer;
 import com.wynntils.core.persisted.upfixers.config.MaxItensityToMaxIntensityUpfixer;
 import com.wynntils.core.persisted.upfixers.config.MobTotemTimerOverlayFeatureToBonusTotemTimerOverlayFeature;
@@ -38,6 +40,7 @@ import com.wynntils.core.persisted.upfixers.config.QuestBookToContentRenamedConf
 import com.wynntils.core.persisted.upfixers.config.QuickCastTimingsToMillisecondsUpfixer;
 import com.wynntils.core.persisted.upfixers.config.SacredSurgeToHolyPowerUpfixer;
 import com.wynntils.core.persisted.upfixers.config.ShowAdditonalTextAboveToShowAdditionalTextAboveUpfixer;
+import com.wynntils.core.persisted.upfixers.config.TelemetryFeatureToWynntilsTelemetryFeatureUpfixer;
 import com.wynntils.core.persisted.upfixers.config.TowerAuraVignetteAndOverlayMovedToCommonFeature;
 import com.wynntils.core.persisted.upfixers.config.TowerAuraVignetteNameUpfixer;
 import com.wynntils.core.persisted.upfixers.config.TradeMarketAutoOpenChatToTradeMarketQuickSearchUpfixer;
@@ -96,6 +99,9 @@ public class UpfixerManager extends Manager {
         registerConfigUpfixer(new ContentTrackerTextOverlayUpfixer());
         registerConfigUpfixer(new HorseMountFeatureToMountKeybindFeatureUpfixer());
         registerConfigUpfixer(new ChatRedirectHorseToMountUpfixer());
+        registerConfigUpfixer(new ItemStatInfoConfigRenameUpfixer());
+        registerConfigUpfixer(new TelemetryFeatureToWynntilsTelemetryFeatureUpfixer());
+        registerConfigUpfixer(new CoordinateOverlayToCoordinatesOverlayUpfixer());
 
         // Register storage upfixers here, in order of run priority
         registerStorageUpfixer(new BankToAccountBankUpfixer());
